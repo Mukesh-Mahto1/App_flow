@@ -1,131 +1,141 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import LoginScreen from './src/screens/LoginScreen'; 
+import HomeScreen from './src/screens/HomeScreen';
+import LoadingScreen from './src/screens/LoadingScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
+import { RootStackParamList } from './src/components/Routes';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const Stack = createStackNavigator<RootStackParamList>();
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const App: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  // Check if user is already logged in when app starts
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const checkLoginStatus = async () => {
+    try {
+      // Simulate app initialization time
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const userToken = await AsyncStorage.getItem('userToken');
+      setIsLoggedIn(!!userToken);
+    } catch (error) {
+      console.log('Error checking login status:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the recommendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+  if (isLoading) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Loading" component={LoadingScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator 
+        initialRouteName={isLoggedIn ? "Home" : "Login"}
+        screenOptions={{ headerShown: false,animation: 'slide_from_right', }}
+      >
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name= "Register" component={RegisterScreen}/>
+        <Stack.Screen 
+          name="ForgotPassword" 
+          component={ForgotPasswordScreen}
+          options={{
+            title: 'Forgot Password',
+            gestureEnabled: true, // Enable swipe back gesture
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;
+
+
+
+/* 
+===========================================
+INSTALLATION INSTRUCTIONS FOR REACT NATIVE CLI:
+===========================================
+
+1. Install React Navigation dependencies:
+   npm install @react-navigation/native @react-navigation/native-stack
+
+2. Install required peer dependencies:
+   npm install react-native-screens react-native-safe-area-context
+
+3. For iOS (if targeting iOS):
+   cd ios && pod install
+
+4. Install Vector Icons:
+   npm install react-native-vector-icons
+   
+   For Android: Add to android/app/build.gradle:
+   apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+   
+   For iOS: Add fonts to Info.plist or use auto-linking
+
+5. File Structure:
+   src/
+   ├── screens/
+   │   ├── LoginScreen.tsx
+   │   ├── RegisterScreen.tsx
+   │   └── HomeScreen.tsx (your main app)
+   └── components/ (optional - for reusable components)
+
+6. Optional - Add TypeScript support if not already configured:
+   npm install --save-dev typescript @types/react @types/react-native
+
+===========================================
+INTEGRATION NOTES:
+===========================================
+
+• Both screens are fully self-contained and ready to use
+• Form validation is built-in with real-time error feedback
+• Smooth animations and keyboard handling included
+• Easy to customize colors, fonts, and styling
+• Ready for API integration - just replace the demo code
+• Responsive design works on all screen sizes
+• Accessibility features included (hitSlop, proper labeling)
+
+===========================================
+CUSTOMIZATION POINTS:
+===========================================
+
+1. Colors: Update the StyleSheet colors to match your brand
+2. API Integration: Replace demo authentication with real API calls
+3. Validation Rules: Modify validation patterns in RegisterScreen
+4. Storage: Add AsyncStorage for "Remember Me" functionality
+5. Error Handling: Customize error messages and handling
+6. Loading States: Add custom loading indicators if needed
+7. Success Actions: Define what happens after successful registration
+
+===========================================
+SECURITY CONSIDERATIONS:
+===========================================
+
+• Never store passwords in plain text
+• Use secure storage for tokens (react-native-keychain)
+• Implement proper password hashing on backend
+• Add biometric authentication if needed
+• Use HTTPS for all API calls
+• Implement proper session management
+*/
